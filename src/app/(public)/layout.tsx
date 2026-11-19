@@ -7,7 +7,9 @@ import NavigationLoader from "@/components/public/navigation-loader";
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-screen flex-col bg-[#08060f]">
-      <NavigationLoader />
+      <Suspense fallback={null}>
+        <NavigationLoader />
+      </Suspense>
 
       <Suspense fallback={null}>
         <SiteHeader />
