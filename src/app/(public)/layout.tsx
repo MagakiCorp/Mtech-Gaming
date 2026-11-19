@@ -2,10 +2,13 @@ import { Suspense, type ReactNode } from "react";
 
 import SiteHeader from "@/components/public/site-header";
 import SiteFooter from "@/components/public/site-footer";
+import NavigationLoader from "@/components/public/navigation-loader";
 
 export default function PublicLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col bg-[#08060f]">
+      <NavigationLoader />
+
       <Suspense fallback={null}>
         <SiteHeader />
       </Suspense>

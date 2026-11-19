@@ -34,11 +34,23 @@ export async function generateMetadata(): Promise<Metadata> {
     "Discover quality gaming accessories at M Tech.";
 
   const ogImage = seo?.defaultOgImage?.url;
+  const faviconUrl = general?.favicon?.url;
 
   return {
     title,
     description,
     keywords: seo?.keywords?.length ? seo.keywords : undefined,
+
+    ...(faviconUrl
+      ? {
+          icons: {
+            icon: [{ url: faviconUrl }],
+            shortcut: [{ url: faviconUrl }],
+            apple: [{ url: faviconUrl }],
+          },
+        }
+      : {}),
+
     openGraph: {
       title,
       description,
@@ -46,6 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
       type: "website",
       ...(ogImage ? { images: [{ url: ogImage }] } : {}),
     },
+
     twitter: {
       card: "summary_large_image",
       title,
