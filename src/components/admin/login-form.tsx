@@ -41,10 +41,23 @@ export default function LoginForm() {
         body: JSON.stringify({ idToken }),
       });
 
-      const result = await response.json();
+      const responseText = await response.text();
+
+      let result: { error?: string; success?: boolean } = {};
+
+      try {
+        result = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        throw new Error(
+          `The server returned an invalid response (${response.status}).`,
+        );
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || "Unable to establish your session.");
+        throw new Error(
+          result.error ||
+            `Unable to establish your session (${response.status}).`,
+        );
       }
 
       // The server session is now established.

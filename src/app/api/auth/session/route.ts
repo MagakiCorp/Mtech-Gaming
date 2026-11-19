@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { adminAuth, adminDb } from "@/lib/firebase-admin";
-
 const COOKIE_NAME = "__session";
 const SESSION_DURATION = 5 * 24 * 60 * 60 * 1000;
 
 export async function POST(request: NextRequest) {
   try {
+    // Initialize Firebase Admin inside the try/catch.
+    const { adminAuth, adminDb } = await import("@/lib/firebase-admin");
+
     const { idToken } = await request.json();
 
     if (!idToken || typeof idToken !== "string") {
@@ -16,10 +17,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the Firebase ID token.
-    const decodedToken = await adminAuth.verifyIdToken(idToken);
+    let decodedToken;
 
-    // Check whether this user is an active administrator.
+    try {
+      decodedToken = await adminAuth.verifyIdToken(idToken);
+    } catch (error) {
+      console.error("Firebase ID token verification failed:", error);
+
+      return NextResponse.json(
+        { error: "Invalid or expired authentication token." },
+        { status: 401 },
+      );
+    }
+
+    // Check administrator authorization.
     const adminSnapshot = await adminDb
       .collection("admins")
       .doc(decodedToken.uid)
@@ -32,14 +43,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a server-side session cookie.
+    // Create the server-side session cookie.
     const sessionCookie = await adminAuth.createSessionCookie(idToken, {
       expiresIn: SESSION_DURATION,
     });
 
-    const response = NextResponse.json({
-      success: true,
-    });
+    const response = NextResponse.json({ success: true });
 
     response.cookies.set(COOKIE_NAME, sessionCookie, {
       httpOnly: true,
@@ -51,20 +60,17 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Session creation failed:", error);
+    console.error("Session creation server error:", error);
 
     return NextResponse.json(
-      { error: "Authentication failed. Please sign in again." },
-      { status: 401 },
+      { error: "A server error occurred while creating your session." },
+      { status: 500 },
     );
   }
 }
 
-// Logout: remove the server-side session cookie.
 export async function DELETE() {
-  const response = NextResponse.json({
-    success: true,
-  });
+  const response = NextResponse.json({ success: true });
 
   response.cookies.set(COOKIE_NAME, "", {
     httpOnly: true,
